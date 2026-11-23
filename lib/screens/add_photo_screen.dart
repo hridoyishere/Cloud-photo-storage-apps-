@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
-import '../data/demo_data.dart';
-import '../models/photo_model.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
-class AddPhotoScreen extends StatelessWidget {
+class AddPhotoScreen extends StatefulWidget {
   const AddPhotoScreen({super.key});
 
-  // Demo: simulate adding a new photo
-  void _addDemoPhoto(BuildContext context) {
-    final newPhoto = Photo(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      url: 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/600/600',
-      dateTaken: DateTime.now(),
-      title: 'New Photo',
-    );
-    DemoData.photos.insert(0, newPhoto);
+  @override
+  State<AddPhotoScreen> createState() => _AddPhotoScreenState();
+}
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo added! Check Home tab.')),
-    );
+class _AddPhotoScreenState extends State<AddPhotoScreen> {
+  final ImagePicker picker = ImagePicker();
+  XFile? selectedImage;
+
+  Future<void> pickPhoto() async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        selectedImage = image;
+      });
+    }
+  }
+
+  Future<void> SubmitImage() async {
+    // Send to node backend
+    print("Submit pressed");
   }
 
   @override
@@ -28,23 +36,34 @@ class AddPhotoScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_photo_alternate_outlined,
-                size: 96, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'Add a new photo',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Pick from gallery or camera',
-              style: TextStyle(color: Colors.grey),
-            ),
+            if (selectedImage == null)
+              Column(
+                children: [
+                  const Icon(Icons.add_photo_alternate_outlined,
+                      size: 96, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Add a new photo',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Pick from gallery or camera',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              )
+            else
+              Image.file(
+                File(selectedImage!.path),
+                height: 250,
+                width: 250,
+                fit: BoxFit.cover,
+              ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _addDemoPhoto(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Demo Photo'),
+              onPressed: selectedImage == null ? pickPhoto : SubmitImage,
+              label: Text(selectedImage == null ? "Add Photo" : "Submit"),
             ),
           ],
         ),
